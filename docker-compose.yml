@@ -1,0 +1,53 @@
+version: '2'
+
+services:
+    cassandra-seed:
+        image: registry.steelhouse.com:443/cassandra-sh:3.3
+        build: .
+        ports: 
+            - "7000"
+            - "7001"
+            - "7199"
+            - "9042:9042"
+            - "9160"
+        environment:
+            - CASSANDRA_CLUSTER_NAME=dal05
+            - CASSANDRA_DC=dal05
+            - CASSANDRA_RACK=rac1
+            - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+
+        volumes:
+            - ./data:/var/lib/cassandra
+
+        hostname: cassandra-seed
+        networks:
+            steelhouse:
+    cassandra-node:
+        image: registry.steelhouse.com:443/cassandra:3.3
+        build: .
+        ports: 
+            - "7000"
+            - "7001"
+            - "7199"
+            - "9042"
+            - "9160"
+        links:
+            - cassandra-seed
+        environment:
+            - CASSANDRA_SEEDS=cassandra-seed
+            - CASSANDRA_CLUSTER_NAME=dal05
+            - CASSANDRA_DC=dal05
+            - CASSANDRA_RACK=rac1
+            - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+        volumes:
+            - cassandra-node-vol:/var/lib/cassandra
+        networks:
+            steelhouse:
+
+volumes:
+#     cassandra-seed-vol:
+    cassandra-node-vol:
+
+networks:
+    steelhouse: 
+    # docker run --name some-cassandra2 -d -e CASSANDRA_SEEDS="$(docker inspect --format='{{ .NetworkSettings.IPAddress }}' some-cassandra)" cassandra:tag
